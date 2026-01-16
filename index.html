@@ -622,11 +622,29 @@
 
         // 역할 선택 함수
         const selectRole = (role) => {
+            // 숨겨진 input 필드에 역할 값 저장
             document.getElementById('signupRole').value = role;
+            console.log('선택된 역할:', role);
+            
+            // UI 업데이트
             document.querySelectorAll('.role-option').forEach(el => {
                 el.classList.remove('selected');
             });
-            event.target.closest('.role-option').classList.add('selected');
+            
+            // event.target 대신 좀 더 안정적인 방식 사용
+            document.querySelectorAll('.role-option').forEach(el => {
+                const label = el.querySelector('.role-option-label');
+                if (label) {
+                    const roleMap = {
+                        student: '학생',
+                        parent: '학부모',
+                        admin: '관리자'
+                    };
+                    if (label.textContent === roleMap[role]) {
+                        el.classList.add('selected');
+                    }
+                }
+            });
             document.getElementById('roleError').textContent = '';
         };
 
@@ -749,7 +767,15 @@
             const email = document.getElementById('signupEmail').value.trim();
             const phone = document.getElementById('signupPhone').value.trim();
             const password = document.getElementById('signupPassword').value;
-            const role = document.getElementById('signupRole').value;
+            let role = document.getElementById('signupRole').value;
+            
+            console.log('회원가입 시도:', { name, email, phone, role });
+            
+            // role이 비어있으면 기본값 설정
+            if (!role || role === '') {
+                role = 'student';
+                document.getElementById('signupRole').value = 'student';
+            }
             
             let hasError = false;
 
@@ -801,13 +827,15 @@
                 name,
                 email,
                 phone,
-                role,
-                roleDisplay: roleMap[role],
+                role: role,
+                roleDisplay: roleMap[role] || '학생',
                 password,
                 isAdmin: role === 'admin',
                 loginMethod: 'password'
             };
 
+            console.log('생성된 사용자:', newUser);
+            
             users.push(newUser);
             localStorage.setItem('users', JSON.stringify(users));
             
@@ -993,15 +1021,20 @@
         // 관리자 함수 - 회원 관리
         const showAllUsers = () => {
             const users = JSON.parse(localStorage.getItem('users'));
-            if (!users) {
+            if (!users || users.length === 0) {
                 document.getElementById('userList').innerHTML = '<p style="color: red;">로컬스토리지에 회원 데이터가 없습니다!</p>';
                 return;
             }
             
-            // roleDisplay 없는 회원 수정
+            console.log('저장된 모든 사용자:', users);
+            
+            // roleDisplay 없는 회원 수정 및 role 검증
             users.forEach(user => {
+                if (!user.role) {
+                    user.role = 'student';
+                }
                 if (!user.roleDisplay && !user.isAdmin) {
-                    const roleMap = { student: '학생', parent: '학부모' };
+                    const roleMap = { student: '학생', parent: '학부모', admin: '관리자' };
                     user.roleDisplay = roleMap[user.role] || user.role;
                 }
             });
@@ -1014,15 +1047,35 @@
 
         const showStudents = () => {
             const users = JSON.parse(localStorage.getItem('users'));
-            const students = users.filter(u => u.role === 'student' && !u.isAdmin);
-            console.log('학생:', students);
+            if (!users) return;
+            
+            // role이 undefined인 경우 처리
+            users.forEach(user => {
+                if (!user.role) user.role = 'student';
+            });
+            
+            const students = users.filter(u => {
+                const userRole = u.role || 'student';
+                return userRole === 'student' && !u.isAdmin;
+            });
+            console.log('학생 목록:', students);
             displayUsers(students, '학생');
         };
 
         const showParents = () => {
             const users = JSON.parse(localStorage.getItem('users'));
-            const parents = users.filter(u => u.role === 'parent' && !u.isAdmin);
-            console.log('학부모:', parents);
+            if (!users) return;
+            
+            // role이 undefined인 경우 처리
+            users.forEach(user => {
+                if (!user.role) user.role = 'student';
+            });
+            
+            const parents = users.filter(u => {
+                const userRole = u.role || 'student';
+                return userRole === 'parent' && !u.isAdmin;
+            });
+            console.log('학부모 목록:', parents);
             displayUsers(parents, '학부모');
         };
 
