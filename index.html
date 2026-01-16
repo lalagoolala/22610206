@@ -993,25 +993,50 @@
         // 관리자 함수 - 회원 관리
         const showAllUsers = () => {
             const users = JSON.parse(localStorage.getItem('users'));
+            if (!users) {
+                document.getElementById('userList').innerHTML = '<p style="color: red;">로컬스토리지에 회원 데이터가 없습니다!</p>';
+                return;
+            }
+            
+            // roleDisplay 없는 회원 수정
+            users.forEach(user => {
+                if (!user.roleDisplay && !user.isAdmin) {
+                    const roleMap = { student: '학생', parent: '학부모' };
+                    user.roleDisplay = roleMap[user.role] || user.role;
+                }
+            });
+            localStorage.setItem('users', JSON.stringify(users));
+            
             const nonAdminUsers = users.filter(u => !u.isAdmin);
+            console.log('전체 회원(관리자 제외):', nonAdminUsers);
             displayUsers(nonAdminUsers, '전체 회원');
         };
 
         const showStudents = () => {
             const users = JSON.parse(localStorage.getItem('users'));
             const students = users.filter(u => u.role === 'student' && !u.isAdmin);
+            console.log('학생:', students);
             displayUsers(students, '학생');
         };
 
         const showParents = () => {
             const users = JSON.parse(localStorage.getItem('users'));
             const parents = users.filter(u => u.role === 'parent' && !u.isAdmin);
+            console.log('학부모:', parents);
             displayUsers(parents, '학부모');
         };
 
         const displayUsers = (users, title) => {
-            const html = users.length > 0 ? `
-                <h3>${title} (${users.length}명)</h3>
+            console.log(`${title} 회원 수:`, users.length);
+            console.log('회원 목록:', users);
+            
+            if (!users || users.length === 0) {
+                document.getElementById('userList').innerHTML = `<p style="text-align: center; color: #999; font-size: 1.1rem;">${title}이 없습니다.</p>`;
+                return;
+            }
+            
+            const html = `
+                <h3 style="color: #ff6b6b; margin-bottom: 15px;">${title} (${users.length}명)</h3>
                 <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
                     <thead>
                         <tr style="background-color: #f0f0f0; border-bottom: 2px solid #ddd;">
@@ -1023,20 +1048,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${users.map(user => `
+                        ${users.map(user => {
+                            const roleDisplay = user.roleDisplay || (user.role === 'student' ? '학생' : user.role === 'parent' ? '학부모' : '알 수 없음');
+                            return `
                             <tr style="border-bottom: 1px solid #ddd;">
                                 <td style="padding: 10px; border: 1px solid #ddd;">${user.name}</td>
                                 <td style="padding: 10px; border: 1px solid #ddd;">${user.email}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.phone}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.roleDisplay}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${user.phone || '-'}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${roleDisplay}</td>
                                 <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
                                     <button onclick="deleteUser('${user.email}')" style="background-color: #ff6b6b; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">삭제</button>
                                 </td>
                             </tr>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </tbody>
                 </table>
-            ` : `<p style="text-align: center; color: #999;">${title}이 없습니다.</p>`;
+            `;
             document.getElementById('userList').innerHTML = html;
         };
 
