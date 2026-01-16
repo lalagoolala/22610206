@@ -8,11 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Google SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel Standalone for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         * {
             font-family: 'Noto Sans KR', 'Jua', sans-serif;
@@ -283,12 +278,6 @@
             margin-top: 5px;
         }
 
-        .success-text {
-            color: #27ae60;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
         .post-item {
             border-bottom: 1px solid #eee;
             padding: 15px 0;
@@ -324,7 +313,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .role-option {
@@ -501,7 +490,60 @@
     <div id="signupModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeSignupModal()">&times;</span>
-            <div id="signupForm"></div>
+            <h2>📝 회원가입</h2>
+            <form id="signupForm" onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label>👥 역할 선택 <span style="color: #e74c3c;">*</span></label>
+                    <div class="role-selection">
+                        <div class="role-option" onclick="selectRole('student')">
+                            <div class="role-option-icon">👨‍🎓</div>
+                            <div class="role-option-label">학생</div>
+                        </div>
+                        <div class="role-option" onclick="selectRole('parent')">
+                            <div class="role-option-icon">👨‍👩‍👧</div>
+                            <div class="role-option-label">학부모</div>
+                        </div>
+                        <div class="role-option" onclick="selectRole('admin')">
+                            <div class="role-option-icon">👑</div>
+                            <div class="role-option-label">관리자</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="signupRole" value="student" required>
+                    <div id="roleError" class="error-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>👤 이름 <span style="color: #e74c3c;">*</span></label>
+                    <input type="text" id="signupName" placeholder="이름을 입력하세요" required>
+                    <div id="nameError" class="error-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>📧 이메일 <span style="color: #e74c3c;">*</span></label>
+                    <input type="email" id="signupEmail" placeholder="example@email.com" required>
+                    <div id="emailError" class="error-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>📱 전화번호 <span style="color: #e74c3c;">*</span></label>
+                    <input type="tel" id="signupPhone" placeholder="010-1234-5678" required>
+                    <div id="phoneError" class="error-text"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>🔑 비밀번호 <span style="color: #e74c3c;">*</span></label>
+                    <input type="password" id="signupPassword" placeholder="비밀번호를 입력하세요 (4자 이상)" required>
+                    <div id="passwordError" class="error-text"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">가입하기</button>
+            </form>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <p style="color: #999; margin-bottom: 15px;">또는</p>
+                <div id="googleSignupBtn" style="display: flex; justify-content: center;"></div>
+            </div>
+            
             <hr>
             <p style="text-align: center; color: #666;">이미 계정이 있으신가요? <button onclick="closeSignupModal(); openLoginModal();" style="background: none; border: none; color: #ff6b6b; font-weight: bold; cursor: pointer;">로그인하기</button></p>
         </div>
@@ -530,256 +572,9 @@
         <small>© 2024 5학년 보건수업. 건강하고 씩씩하게!</small>
     </footer>
 
-    <!-- React Signup Form Component -->
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        function SignupForm({ onClose, onSuccess }) {
-            const [formData, setFormData] = useState({
-                name: '',
-                email: '',
-                phone: '',
-                role: 'student',
-                password: ''
-            });
-
-            const [errors, setErrors] = useState({});
-            const [submitted, setSubmitted] = useState(false);
-
-            const validateEmail = (email) => {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            };
-
-            const validatePhone = (phone) => {
-                const phoneRegex = /^[\d\-\(\)]{10,}$/;
-                return phoneRegex.test(phone.replace(/\s/g, ''));
-            };
-
-            const validateForm = () => {
-                const newErrors = {};
-
-                if (!formData.name.trim()) {
-                    newErrors.name = '이름을 입력해주세요.';
-                } else if (formData.name.length < 2) {
-                    newErrors.name = '이름은 2자 이상이어야 합니다.';
-                }
-
-                if (!formData.email.trim()) {
-                    newErrors.email = '이메일을 입력해주세요.';
-                } else if (!validateEmail(formData.email)) {
-                    newErrors.email = '올바른 이메일 형식을 입력해주세요.';
-                }
-
-                if (!formData.phone.trim()) {
-                    newErrors.phone = '전화번호를 입력해주세요.';
-                } else if (!validatePhone(formData.phone)) {
-                    newErrors.phone = '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
-                }
-
-                if (!formData.password) {
-                    newErrors.password = '비밀번호를 입력해주세요.';
-                } else if (formData.password.length < 4) {
-                    newErrors.password = '비밀번호는 4자 이상이어야 합니다.';
-                }
-
-                if (!formData.role) {
-                    newErrors.role = '역할을 선택해주세요.';
-                }
-
-                setErrors(newErrors);
-                return Object.keys(newErrors).length === 0;
-            };
-
-            const handleChange = (e) => {
-                const { name, value } = e.target;
-                setFormData(prev => ({
-                    ...prev,
-                    [name]: value
-                }));
-                if (errors[name]) {
-                    setErrors(prev => ({
-                        ...prev,
-                        [name]: ''
-                    }));
-                }
-            };
-
-            const handleRoleSelect = (role) => {
-                setFormData(prev => ({
-                    ...prev,
-                    role: role
-                }));
-                if (errors.role) {
-                    setErrors(prev => ({
-                        ...prev,
-                        role: ''
-                    }));
-                }
-            };
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (!validateForm()) return;
-
-                const users = JSON.parse(localStorage.getItem('users')) || [];
-                if (users.find(u => u.email === formData.email)) {
-                    setErrors({ email: '이미 가입된 이메일입니다.' });
-                    return;
-                }
-
-                const roleMap = {
-                    student: '학생',
-                    parent: '학부모',
-                    admin: '관리자'
-                };
-
-                const newUser = {
-                    id: Date.now(),
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    role: formData.role,
-                    roleDisplay: roleMap[formData.role],
-                    password: formData.password,
-                    isAdmin: formData.role === 'admin',
-                    loginMethod: 'password'
-                };
-
-                users.push(newUser);
-                localStorage.setItem('users', JSON.stringify(users));
-
-                setSubmitted(true);
-                setTimeout(() => {
-                    onSuccess();
-                }, 2000);
-            };
-
-            const getRoleIcon = (role) => {
-                const icons = {
-                    student: '👨‍🎓',
-                    parent: '👨‍👩‍👧',
-                    admin: '👑'
-                };
-                return icons[role];
-            };
-
-            const getRoleLabel = (role) => {
-                const labels = {
-                    student: '학생',
-                    parent: '학부모',
-                    admin: '관리자'
-                };
-                return labels[role];
-            };
-
-            if (submitted) {
-                return (
-                    <div style={{ textAlign: 'center', padding: '20px' }}>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>✅</div>
-                        <h3 style={{ color: '#27ae60', marginBottom: '10px' }}>회원가입 완료!</h3>
-                        <p style={{ color: '#666', marginBottom: '10px' }}>축하합니다! 회원가입이 완료되었습니다.</p>
-                        <p style={{ color: '#999', fontSize: '0.9rem' }}>로그인 창으로 이동 중입니다...</p>
-                    </div>
-                );
-            }
-
-            return (
-                <div>
-                    <h2>📝 회원가입</h2>
-                    <form onSubmit={handleSubmit}>
-                        <div className="form-group">
-                            <label>👥 역할 선택 <span style={{ color: '#e74c3c' }}>*</span></label>
-                            <div className="role-selection">
-                                {['student', 'parent', 'admin'].map(role => (
-                                    <div
-                                        key={role}
-                                        className={`role-option ${formData.role === role ? 'selected' : ''}`}
-                                        onClick={() => handleRoleSelect(role)}
-                                    >
-                                        <div className="role-option-icon">{getRoleIcon(role)}</div>
-                                        <div className="role-option-label">{getRoleLabel(role)}</div>
-                                    </div>
-                                ))}
-                            </div>
-                            {errors.role && <div className="error-text">{errors.role}</div>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>👤 이름 <span style={{ color: '#e74c3c' }}>*</span></label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                placeholder="이름을 입력하세요"
-                                style={{ borderColor: errors.name ? '#e74c3c' : '#ff6b6b' }}
-                            />
-                            {errors.name && <div className="error-text">{errors.name}</div>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>📧 이메일 <span style={{ color: '#e74c3c' }}>*</span></label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder="example@email.com"
-                                style={{ borderColor: errors.email ? '#e74c3c' : '#ff6b6b' }}
-                            />
-                            {errors.email && <div className="error-text">{errors.email}</div>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>📱 전화번호 <span style={{ color: '#e74c3c' }}>*</span></label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                placeholder="010-1234-5678"
-                                style={{ borderColor: errors.phone ? '#e74c3c' : '#ff6b6b' }}
-                            />
-                            {errors.phone && <div className="error-text">{errors.phone}</div>}
-                        </div>
-
-                        <div className="form-group">
-                            <label>🔑 비밀번호 <span style={{ color: '#e74c3c' }}>*</span></label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="비밀번호를 입력하세요 (4자 이상)"
-                                style={{ borderColor: errors.password ? '#e74c3c' : '#ff6b6b' }}
-                            />
-                            {errors.password && <div className="error-text">{errors.password}</div>}
-                        </div>
-
-                        <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '20px' }}>
-                            가입하기
-                        </button>
-                    </form>
-
-                    <div style={{ textAlign: 'center', margin: '20px 0' }}>
-                        <p style={{ color: '#999', marginBottom: '15px' }}>또는</p>
-                        <div id="googleSignupBtn" style={{ display: 'flex', justifyContent: 'center' }}></div>
-                    </div>
-                </div>
-            );
-        }
-
-        window.renderSignupForm = (onClose, onSuccess) => {
-            ReactDOM.render(
-                <SignupForm onClose={onClose} onSuccess={onSuccess} />,
-                document.getElementById('signupForm')
-            );
-        };
-    </script>
+    <script>
         // 로컬 스토리지 초기화
         const initStorage = () => {
-            // 사용자 목록 초기화 (관리자 계정 포함)
             if (!localStorage.getItem('users')) {
                 const adminUser = {
                     id: 1,
@@ -808,8 +603,28 @@
 
         initStorage();
 
-        // 현재 로그인한 사용자
         let currentUser = localStorage.getItem('currentUser') ? JSON.parse(localStorage.getItem('currentUser')) : null;
+
+        // 역할 선택 함수
+        const selectRole = (role) => {
+            document.getElementById('signupRole').value = role;
+            document.querySelectorAll('.role-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            event.target.closest('.role-option').classList.add('selected');
+            document.getElementById('roleError').textContent = '';
+        };
+
+        // 유효성 검사 함수
+        const validateEmail = (email) => {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        };
+
+        const validatePhone = (phone) => {
+            const phoneRegex = /^[\d\-]{10,}$/;
+            return phoneRegex.test(phone.replace(/\s/g, ''));
+        };
 
         // UI 업데이트
         const updateUI = () => {
@@ -837,14 +652,13 @@
             }
         };
 
-        // 이메일/비밀번호 로그인
+        // 로그인
         const handleLogin = (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const users = JSON.parse(localStorage.getItem('users'));
             
-            // 이메일과 비밀번호로 로그인
             const user = users.find(u => u.email === email && u.password === password);
             
             if (user) {
@@ -862,14 +676,12 @@
         const handleGoogleLogin = (response) => {
             try {
                 const token = response.credential;
-                // JWT 토큰 디코딩 (간단한 방식)
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 
                 const users = JSON.parse(localStorage.getItem('users'));
                 let user = users.find(u => u.email === payload.email);
                 
                 if (!user) {
-                    // 새 사용자 생성 (Google 로그인으로 자동 회원가입)
                     user = {
                         id: Date.now(),
                         name: payload.name,
@@ -897,45 +709,84 @@
             }
         };
 
-        // Google 로그인 실패
-        const handleGoogleError = () => {
-            alert('Google 로그인에 실패했습니다.');
-        };
-
         // 회원가입
         const handleSignup = (e) => {
             e.preventDefault();
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const studentId = document.getElementById('signupStudent').value;
-            const password = document.getElementById('signupPassword').value;
             
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const phone = document.getElementById('signupPhone').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const role = document.getElementById('signupRole').value;
+            
+            let hasError = false;
+
+            // 유효성 검사
+            if (!name || name.length < 2) {
+                document.getElementById('nameError').textContent = '이름은 2자 이상이어야 합니다.';
+                hasError = true;
+            } else {
+                document.getElementById('nameError').textContent = '';
+            }
+
+            if (!validateEmail(email)) {
+                document.getElementById('emailError').textContent = '올바른 이메일 형식을 입력해주세요.';
+                hasError = true;
+            } else {
+                document.getElementById('emailError').textContent = '';
+            }
+
+            if (!validatePhone(phone)) {
+                document.getElementById('phoneError').textContent = '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)';
+                hasError = true;
+            } else {
+                document.getElementById('phoneError').textContent = '';
+            }
+
+            if (password.length < 4) {
+                document.getElementById('passwordError').textContent = '비밀번호는 4자 이상이어야 합니다.';
+                hasError = true;
+            } else {
+                document.getElementById('passwordError').textContent = '';
+            }
+
+            if (hasError) return;
+
             const users = JSON.parse(localStorage.getItem('users'));
             if (users.find(u => u.email === email)) {
-                alert('이미 가입된 이메일입니다.');
+                document.getElementById('emailError').textContent = '이미 가입된 이메일입니다.';
                 return;
             }
-            
-            if (password.length < 4) {
-                alert('비밀번호는 4자 이상이어야 합니다.');
-                return;
-            }
-            
-            const newUser = { 
-                id: Date.now(), 
-                name, 
-                email, 
-                studentId, 
+
+            const roleMap = {
+                student: '학생',
+                parent: '학부모',
+                admin: '관리자'
+            };
+
+            const newUser = {
+                id: Date.now(),
+                name,
+                email,
+                phone,
+                role,
+                roleDisplay: roleMap[role],
                 password,
-                isAdmin: false,
+                isAdmin: role === 'admin',
                 loginMethod: 'password'
             };
+
             users.push(newUser);
             localStorage.setItem('users', JSON.stringify(users));
             
             closeSignupModal();
-            alert('회원가입 되었습니다! 이제 로그인하세요.');
-            document.querySelector('#signupModal form').reset();
+            alert('회원가입 완료! 로그인해주세요.');
+            document.getElementById('signupForm').reset();
+            document.getElementById('signupRole').value = 'student';
+            document.querySelectorAll('.role-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            document.querySelectorAll('.role-option')[0].classList.add('selected');
         };
 
         // 로그아웃
@@ -950,13 +801,11 @@
         // 모달 함수들
         const openLoginModal = () => {
             document.getElementById('loginModal').style.display = 'block';
-            // Google 로그인 버튼 초기화
             setTimeout(() => {
                 if (window.google && window.google.accounts) {
                     google.accounts.id.initialize({
                         client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-                        callback: handleGoogleLogin,
-                        error_callback: handleGoogleError
+                        callback: handleGoogleLogin
                     });
                     
                     google.accounts.id.renderButton(
@@ -978,15 +827,20 @@
 
         const openSignupModal = () => {
             document.getElementById('signupModal').style.display = 'block';
-            renderSignupForm(closeSignupModal, handleSignupSuccess);
+            document.getElementById('signupRole').value = 'student';
+            document.querySelectorAll('.role-option').forEach((el, index) => {
+                if (index === 0) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
             
-            // Google 회원가입 버튼 초기화
             setTimeout(() => {
                 if (window.google && window.google.accounts) {
                     google.accounts.id.initialize({
                         client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-                        callback: handleGoogleLogin,
-                        error_callback: handleGoogleError
+                        callback: handleGoogleLogin
                     });
                     
                     google.accounts.id.renderButton(
@@ -1003,12 +857,6 @@
 
         const closeSignupModal = () => {
             document.getElementById('signupModal').style.display = 'none';
-        };
-
-        const handleSignupSuccess = () => {
-            closeSignupModal();
-            openLoginModal();
-            alert('회원가입 완료! 로그인해주세요.');
         };
 
         const openPostModal = (type) => {
